@@ -1,7 +1,7 @@
 """Client support for switch related api calls."""
 import json
-from hil.client.base import check_reserved_chars
 from hil.client.base import ClientBase
+from hil.client.base import check_reserved_chars
 
 
 class Switch(ClientBase):
@@ -15,17 +15,15 @@ class Switch(ClientBase):
         url = self.object_url('/switches')
         return self.check_response(self.httpClient.request("GET", url))
 
-    def register(self, switch, subtype, switchinfo):
+    def register(self, switch, subtype, *args):
         """Registers a switch with name <switch> and
         model <subtype> , and relevant arguments  in <*args>
-
-        switchinfo must be a dictionary.
         """
-        switchinfo['type'] = subtype
-        url = self.object_url('switch', switch)
-        payload = json.dumps(switchinfo)
-        return self.check_response(self.httpClient.request("PUT", url,
-                                                           data=payload))
+#       It is assumed that the HIL administrator is aware of
+#       of the switches HIL will control and has read the
+#       HIL documentation to use appropriate flags to register
+#       it with HIL.
+        raise NotImplementedError
 
     @check_reserved_chars()
     def delete(self, switch):

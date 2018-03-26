@@ -11,7 +11,6 @@ import sys
 import urllib
 import schema
 import logging
-import ast
 
 import pkg_resources
 
@@ -547,42 +546,48 @@ def switch_register(switch, subtype, *args):
     <subtype>, <hostname>, <username>,  <password>
     eg. hil switch_register mock03 mock mockhost01 mockuser01 mockpass01
 
-    To make a generic switch register call, pass the arguments like:
-
-    hil switch_register switchname subtype switchinfo
-    hil switch_register dell-1 'http://example.com/schema/url' '{"foo": "bar"}'
+    FIXME: current design needs to change. CLI should not know about every
+    backend. Ideally, this should be taken care of in the driver itself or
+    client library (work-in-progress) should manage it.
     """
     switch_api = "http://schema.massopencloud.org/haas/v0/switches/"
     if subtype == "nexus" or subtype == "delln3000":
         if len(args) == 4:
             switchinfo = {
+                "type": switch_api + subtype,
                 "hostname": args[0],
                 "username": args[1],
                 "password": args[2],
                 "dummy_vlan": args[3]}
-            subtype = switch_api + subtype
         else:
             sys.stderr.write('ERROR: subtype ' + subtype +
                              ' requires exactly 4 arguments\n'
                              '<hostname> <username> <password>'
                              '<dummy_vlan_no>\n')
             return
-    elif subtype == "mock" or subtype == "powerconnect55xx":
+    elif subtype == "mock":
         if len(args) == 3:
-            switchinfo = {"hostname": args[0],
+            switchinfo = {"type": switch_api + subtype, "hostname": args[0],
                           "username": args[1], "password": args[2]}
-            subtype = switch_api + subtype
         else:
             sys.stderr.write('ERROR: subtype ' + subtype +
                              ' requires exactly 3 arguments\n')
             sys.stderr.write('<hostname> <username> <password>\n')
             return
-    elif subtype == "brocade" or subtype == "dellnos9":
+    elif subtype == "powerconnect55xx":
+        if len(args) == 3:
+            switchinfo = {"type": switch_api + subtype, "hostname": args[0],
+                          "username": args[1], "password": args[2]}
+        else:
+            sys.stderr.write('ERROR: subtype ' + subtype +
+                             ' requires exactly 3 arguments\n'
+                             '<hostname> <username> <password>\n')
+            return
+    elif subtype == "brocade" or "dellnos9":
         if len(args) == 4:
-            switchinfo = {"hostname": args[0],
+            switchinfo = {"type": switch_api + subtype, "hostname": args[0],
                           "username": args[1], "password": args[2],
                           "interface_type": args[3]}
-            subtype = switch_api + subtype
         else:
             sys.stderr.write('ERROR: subtype ' + subtype +
                              ' requires exactly 4 arguments\n'
@@ -594,13 +599,10 @@ def switch_register(switch, subtype, *args):
                              'etc.\n')
             return
     else:
-        if len(args) == 0:
-            sys.exit('No switchinfo provided')
-        try:
-            switchinfo = ast.literal_eval(args[0])
-        except (ValueError, SyntaxError):
-            sys.exit('Malformed switchinfo')
-    C.switch.register(switch, subtype, switchinfo)
+        sys.stderr.write('ERROR: Invalid subtype supplied\n')
+        return
+    url = object_url('switch', switch)
+    do_put(url, data=switchinfo)
 
 
 @cmd
@@ -756,7 +758,8 @@ def list_headnode_images():
 @cmd
 def show_console(node):
     """Display console log for <node>"""
-    print (C.node.show_console(node))
+    url = object_url('node', node, 'console')
+    do_get(url)
 
 
 @cmd

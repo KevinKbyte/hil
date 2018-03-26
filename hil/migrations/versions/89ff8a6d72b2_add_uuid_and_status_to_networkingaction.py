@@ -15,7 +15,7 @@ from hil import model
 # revision identifiers, used by Alembic.
 revision = '89ff8a6d72b2'
 down_revision = '7acb050f783c'
-branch_labels = None
+branch_labels = ('hil',)
 
 # pylint: disable=missing-docstring
 

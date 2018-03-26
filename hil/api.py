@@ -6,7 +6,7 @@ import json
 import requests
 import uuid
 
-from schema import Schema, Optional, SchemaError
+from schema import Schema, Optional
 
 from hil import model, errors
 from hil.model import db
@@ -903,12 +903,7 @@ def switch_register(switch, type, **kwargs):
     cls = concrete_class_for(model.Switch, type)
     if cls is None:
         raise errors.BadArgumentError('%r is not a valid switch type.' % type)
-    try:
-        cls.validate(kwargs)
-    except SchemaError:
-        raise errors.BadArgumentError(
-                        'The arguments are not valid for this switch type')
-
+    cls.validate(kwargs)
     obj = cls(**kwargs)
     obj.label = switch
     obj.type = type
